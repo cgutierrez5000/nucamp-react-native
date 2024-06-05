@@ -14,6 +14,7 @@ import { useRef } from 'react';
 import * as Animatable from 'react-native-animatable';
 import { Picker } from '@react-native-picker/picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Notifications from 'expo-notifications';
 
 const ReservationScreen = () => {
   const [campers, setCampers] = useState(1);
@@ -50,6 +51,7 @@ const ReservationScreen = () => {
         {
           text: 'OK',
           onPress: () => {
+            presentLocalNotification(date.toLocaleDateString('en-US'));
             resetForm();
           },
         },
@@ -68,6 +70,33 @@ const ReservationScreen = () => {
     setHikeIn(false);
     setDate(new Date());
     setShowCalendar(false);
+  };
+
+  const presentLocalNotification = async (reservationDate) => {
+    const sendNotification = () => {
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: true,
+        }),
+      });
+
+      Notifications.scheduleNotificationAsync({
+        content: {
+          title: 'Your Campsite Reservation Search',
+          body: `Search for ${reservationDate} requested`,
+        },
+        trigger: null,
+      });
+    };
+    let permissions = await Notifications.getPermissionsAsync();
+    if (!permissions.granted) {
+      permissions = await Notifications.requestPermissionsAsync();
+    }
+    if (permissions.granted) {
+      sendNotification();
+    }
   };
 
   return (
@@ -129,32 +158,6 @@ const ReservationScreen = () => {
           />
         </View>
       </Animatable.View>
-
-      {/* <Modal
-        animationType='slide'
-        transparent={false}
-        visible={showModal}
-        onRequestClose={() => setShowModal(!showModal)}
-      >
-        <View style={styles.modal}>
-          <Text style={styles.modalTitle}>Search Campsite Reservations</Text>
-          <Text style={styles.modalText}>Number of Campers: {campers}</Text>
-          <Text style={styles.modalText}>
-            Hike-In?: {hikeIn ? 'Yes' : 'No'}
-          </Text>
-          <Text style={styles.modalText}>
-            Date: {date.toLocaleDateString('en-US')}
-          </Text>
-          <Button
-            onPress={() => {
-              setShowModal(!showModal);
-              resetForm();
-            }}
-            color='#5637dd'
-            title='Close'
-          ></Button>
-        </View>
-      </Modal> */}
     </ScrollView>
   );
 };
@@ -174,22 +177,6 @@ const styles = StyleSheet.create({
   formItem: {
     flex: 1,
   },
-  // modal: {
-  //   justifyContent: 'center',
-  //   margin: 20,
-  // },
-  // modalTitle: {
-  //   fontSize: 24,
-  //   fontWeight: 'bold',
-  //   backgroundColor: '#5637dd',
-  //   textAlign: 'center',
-  //   color: '#fff',
-  //   marginBottom: 20,
-  // },
-  // modalText: {
-  //   fontSize: 18,
-  //   margin: 10,
-  // },
 });
 
 export default ReservationScreen;
